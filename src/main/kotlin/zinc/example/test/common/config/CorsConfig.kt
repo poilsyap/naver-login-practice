@@ -14,8 +14,9 @@ class CorsConfig {
         return object : WebMvcConfigurer {
             override fun addCorsMappings(registry: CorsRegistry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000") // React 앱이 실행되는 포트
+                        .allowedOrigins("http://localhost:3000", "*") // React 앱이 실행되는 포트 -- "http://localhost:3000" 추후 적용
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedHeaders("Authorization", "Cache-Control", "Content-Type")
             }
         }
     }
