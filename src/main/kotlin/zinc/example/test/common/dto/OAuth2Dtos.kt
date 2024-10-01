@@ -19,9 +19,9 @@ data class NaverApiResponse(
 
 @Serializable
 data class NaverApiProfileInfo(
-        val id: String, // "id":"jssTGdshWwgmY-Uj2mc-kbW7-84MRiAOYzlN7MrPeLI"
-        val gender: String, // "gender":"F"
-        val email: String, // "email":"leeah9737@naver.com"
-        val name: String, // "name":"\uc774\uc544\uc5f0"
-        val birthday: String // "birthday":"07-10"
+        val id: String,
+        val gender: String,
+        val email: String,
+        val name: String,
+        val birthday: String
 )
