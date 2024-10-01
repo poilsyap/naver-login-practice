@@ -28,13 +28,15 @@ spring:
         format_sql: true      # 쿼리 로그 포맷 (정렬)
         highlight_sql: true
         show_sql: true        # 쿼리 로그 출력
+
   security:
     oauth2:
       client:
         registration:
           naver:
-            client-id: "CW0BQSe6XFSmQf39fG3V"
-            client-secret: "rllk1SzcR6"
+            client-id: CW0BQSe6XFSmQf39fG3V
+            client-secret: rllk1SzcR6
+
 
 
 logging:

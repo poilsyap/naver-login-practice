@@ -1,6 +1,5 @@
 package zinc.example.test.member.service
 
-import com.nimbusds.jose.shaded.gson.Gson
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -10,6 +9,7 @@ import io.ktor.serialization.kotlinx.json.*
 import jakarta.transaction.Transactional
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
 import org.springframework.stereotype.Service
 import zinc.example.test.common.dto.NaverApiResponse
 import zinc.example.test.common.dto.NaverOAuthToken
@@ -33,7 +33,8 @@ class MemberService (
     fun signUp(memberDtoRequest: MemberDtoRequest): String{
         // 1. id 중복 검사
         var member: Member? =
-                memberRepository.findByLoginId(memberDtoRequest.loginId)
+                memberRepository.findByEmail(memberDtoRequest.email)
+
         if(member != null){
             return "존재하는 회원 ID 입니다."
         }
@@ -56,79 +57,50 @@ class MemberService (
     /**
      * 네이버 로그인
      */
-    fun naverLogin(code : String, state: String): String{
+    fun naverLogin(authentication: OAuth2AuthenticationToken): String{
 
-        // 접근 토큰 발급 요청 url
-        var requestUrl = "https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id=CW0BQSe6XFSmQf39fG3V&client_secret=rllk1SzcR6&code=$code&state=$state"
-        val client = HttpClient(CIO){
-            install(ContentNegotiation){
-                json()
-            }
-        }
+        val userAttributes = authentication.principal.attributes
+        val response = userAttributes["response"] as Map<String, Any>
 
-        var accessToken: String
-        runBlocking {
-            val response: HttpResponse = client.get(requestUrl)
+        val id = response["id"] as String
+        val gender = response["gender"] as String
+        val email = response["email"] as String
+        val name = response["name"] as String
+        val birthday = response["birthday"] as String
+        val birthyear = response["birthyear"] as String
 
-            if(response.status.value == 200){
-                val naverToken : NaverOAuthToken = Json.decodeFromString(response.bodyAsText())
-                accessToken = naverToken.access_token
+
+        var member: Member? =
+                memberRepository.findByEmail(email!!)
+
+        if(member != null) {
+            println("회원 정보 존재")
+        }else {
+            println("존재하는 회원 정보가 없어서 회원가입 진행")
+
+            val birth : LocalDate = LocalDate.parse(birthyear!! + "-" + birthday!!, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+            val gen : Gender = if(gender == "F"){
+                Gender.WOMAN
             }else{
-                throw RuntimeException()
+                Gender.MAN
             }
+
+            member = Member(
+                    null,
+                    id!!,
+                    "naver-11",
+                    name!!,
+                    birth,
+                    gen!!,
+                    email!!
+            )
+
+            memberRepository.save(member)
+            println("회원가입 완료")
         }
 
-        // 회원 프로필 조회 API
-        val profileInfoUrl = "https://openapi.naver.com/v1/nid/me"
-        runBlocking {
-
-            val response: HttpResponse = client.get(profileInfoUrl){
-                headers{
-                    append("Authorization", "Bearer " + accessToken)
-                }
-            }
-
-            if(response.status.value == 200){
-                val userInfo : NaverApiResponse = Json.decodeFromString(response.bodyAsText())
-                println(userInfo.toString())
-
-                var member: Member? =
-                        memberRepository.findByLoginId(userInfo.response.id)
-
-                if(member != null){
-                    println("회원 정보 존재")
-                    return@runBlocking
-                }else{
-                    println("존재하는 회원 정보가 없어서 회원가입 진행")
-                    val birth : MonthDay = MonthDay.parse(userInfo.response.birthday, DateTimeFormatter.ofPattern("MM-dd"))
-                    val gen : Gender = if(userInfo.response.birthday == "F"){
-                        Gender.WOMAN
-                    }else{
-                        Gender.MAN
-                    }
-
-                    member = Member(
-                            null,
-                            userInfo.response.id,
-                                    "naver-11",
-                            userInfo.response.name,
-                            birth,
-                            gen,
-                            userInfo.response.email
-                    )
-
-                    memberRepository.save(member)
-                    println("회원가입 완료")
-                }
-            }else{
-                throw RuntimeException()
-            }
-        }
-
-        println("==== naver login end ====")
-        return "네이버 로그인 성공"
+            return email
     }
-
 
 
 }

@@ -5,4 +5,5 @@ import zinc.example.test.member.entity.Member
 
 interface MemberRepository : JpaRepository<Member, Long>{
     fun findByLoginId(loginId: String): Member?
+    fun findByEmail(email: String): Member?
 }

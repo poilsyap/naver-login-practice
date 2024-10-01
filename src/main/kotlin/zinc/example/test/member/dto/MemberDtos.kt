@@ -58,8 +58,8 @@ data class MemberDtoRequest(
     val name: String
         get() = _name!!
 
-    val birthDate: MonthDay
-        get() = _birthDate!!.toMonthDay()
+    val birthDate: LocalDate
+        get() = _birthDate!!.toLocalDate()
 
     val gender: Gender
         get() = Gender.valueOf(_gender!!)
@@ -67,7 +67,6 @@ data class MemberDtoRequest(
     val email: String
         get() = _email!!
 
-    private fun String.toMonthDay(): MonthDay =
-//            LocalDate.parse(this, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-            MonthDay.parse(this, DateTimeFormatter.ofPattern("MM-dd"))
+    private fun String.toLocalDate(): LocalDate =
+            LocalDate.parse(this, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
 }

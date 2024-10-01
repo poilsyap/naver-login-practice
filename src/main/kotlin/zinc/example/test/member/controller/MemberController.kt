@@ -1,7 +1,10 @@
 package zinc.example.test.member.controller
 
+import io.ktor.http.*
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -26,13 +29,13 @@ class MemberController (
     }
 
     @GetMapping("/login/naver")
-    fun naverLogin(@RequestParam code: String,
-                   @RequestParam state: String): RedirectView {
+    fun naverLogin(authentication: OAuth2AuthenticationToken): ResponseEntity<String> {
+        val message: String? = memberService.naverLogin(authentication)
 
-        val message: String? = memberService.naverLogin(code, state)
-        val redirectView = RedirectView("http://localhost:3000/Home")
-        redirectView.addStaticAttribute("message", message!!)
-        return redirectView
+        return ResponseEntity
+                .status(HttpStatus.FOUND)
+                .header(HttpHeaders.Location, "http://localhost:3000/Home?message=$message")
+                .build()
     }
 
     /**
