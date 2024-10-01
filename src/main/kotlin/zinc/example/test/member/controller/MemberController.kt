@@ -4,6 +4,8 @@ import io.ktor.http.*
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient
+import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -29,7 +31,11 @@ class MemberController (
     }
 
     @GetMapping("/login/naver")
-    fun naverLogin(authentication: OAuth2AuthenticationToken): ResponseEntity<String> {
+    fun naverLogin(authentication: OAuth2AuthenticationToken, @RegisteredOAuth2AuthorizedClient("naver") authorizedClient: OAuth2AuthorizedClient): ResponseEntity<String> {
+        val accessToken = authorizedClient.accessToken.tokenValue
+
+        println(accessToken)
+
         val message: String? = memberService.naverLogin(authentication)
 
         return ResponseEntity
