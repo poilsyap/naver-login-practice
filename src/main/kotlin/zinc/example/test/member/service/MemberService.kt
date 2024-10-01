@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.stereotype.Service
 import zinc.example.test.common.dto.NaverApiResponse
 import zinc.example.test.common.dto.NaverOAuthToken
+import zinc.example.test.common.exception.InvalidInputException
 import zinc.example.test.common.status.Gender
 import zinc.example.test.member.dto.MemberDtoRequest
 import zinc.example.test.member.entity.Member
@@ -36,7 +37,7 @@ class MemberService (
                 memberRepository.findByEmail(memberDtoRequest.email)
 
         if(member != null){
-            return "존재하는 회원 ID 입니다."
+            throw InvalidInputException("eamil", "이미 등록된 Email 입니다.")
         }
 
         member = Member(

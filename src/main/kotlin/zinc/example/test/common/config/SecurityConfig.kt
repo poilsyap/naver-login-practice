@@ -36,11 +36,12 @@ class SecurityConfig {
                 }
                 .exceptionHandling {
                     per -> per
-                        .authenticationEntryPoint(LoginUrlAuthenticationEntryPoint("/login"))
+                        .authenticationEntryPoint(LoginUrlAuthenticationEntryPoint("/api/member/login"))
                 }
 
                 .addFilterAt(CharacterEncodingFilter(), CsrfFilter::class.java)
-                .csrf {csrf -> csrf.ignoringRequestMatchers(PathRequest.toH2Console())} // h2-console 허용
+                .csrf {csrf -> csrf.ignoringRequestMatchers("/api/member/**") // 포스트맨 로그인 요청을 허용하기 위해 해당 경로 허용 csrf.disable() 사용해서 전체 허용해줘도 됨
+                                .ignoringRequestMatchers(PathRequest.toH2Console())} // h2-console 허용 -- csrf.ignoringRequestMatchers(PathRequest.toH2Console())
                 .headers{headers -> headers.frameOptions{ // h2-console 허용
                     frameOptions -> frameOptions.sameOrigin()
                 }}

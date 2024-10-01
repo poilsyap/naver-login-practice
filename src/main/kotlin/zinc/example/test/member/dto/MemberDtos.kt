@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import zinc.example.test.common.annotation.ValidEnum
 import zinc.example.test.common.status.Gender
+import zinc.example.test.member.entity.Member
 import java.time.LocalDate
 import java.time.MonthDay
 import java.time.format.DateTimeFormatter
@@ -31,9 +32,8 @@ data class MemberDtoRequest(
 
         @field:NotBlank
         @field:Pattern(
-//                regexp = "^([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))$",
-                regexp = "^((0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))$",
-                message = "날짜형식(MM-DD)을 확인해주세요"
+                regexp = "^([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))$",
+                message = "날짜형식(yyyy-MM-DD)을 확인해주세요"
         )
         @JsonProperty("birthDate")
         private val _birthDate: String?,
@@ -69,4 +69,7 @@ data class MemberDtoRequest(
 
     private fun String.toLocalDate(): LocalDate =
             LocalDate.parse(this, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+
+    fun toEntity(): Member =
+            Member(id, loginId, password, name, birthDate, gender, email)
 }
