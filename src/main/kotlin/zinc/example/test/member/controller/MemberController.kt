@@ -11,18 +11,18 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.servlet.view.RedirectView
 import zinc.example.test.common.dto.BaseResponse
 import zinc.example.test.member.dto.MemberDtoRequest
 import zinc.example.test.member.service.MemberService
+import java.util.concurrent.ConcurrentHashMap
 
 @RequestMapping("/api/member")
 @RestController
 class MemberController (
         private val memberService: MemberService
 ){
+
     /**
      * 회원가입
      */
@@ -32,18 +32,23 @@ class MemberController (
         return BaseResponse(message = resultMsg)
     }
 
+    /**
+     * 네이버 로그인 Oauth 연동
+     */
     @GetMapping("/login/naver")
     fun naverLogin(authentication: OAuth2AuthenticationToken, @RegisteredOAuth2AuthorizedClient("naver") authorizedClient: OAuth2AuthorizedClient): ResponseEntity<String> {
-        val accessToken = authorizedClient.accessToken.tokenValue
-
-        println(accessToken)
-
-        val message: String? = memberService.naverLogin(authentication)
+        val userEmail: String? = memberService.naverLogin(authentication, authorizedClient)
 
         return ResponseEntity
                 .status(HttpStatus.FOUND)
-                .header(HttpHeaders.Location, "http://localhost:3000/Home?message=$message")
+                .header(HttpHeaders.Location, "http://localhost:3000/Home?message=$userEmail")
                 .build()
+    }
+
+    @PostMapping("/logout/naver")
+    fun naverLogout(@RequestBody memberDtoRequest: MemberDtoRequest): ResponseEntity<String>{
+        memberService.naverLogout(memberDtoRequest)
+        return ResponseEntity.status(HttpStatus.OK).build()
     }
 
     /**
