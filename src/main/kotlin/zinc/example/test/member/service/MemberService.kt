@@ -8,17 +8,26 @@ import io.ktor.client.statement.*
 import io.ktor.serialization.kotlinx.json.*
 import jakarta.transaction.Transactional
 import kotlinx.coroutines.runBlocking
+import org.apache.juli.logging.Log
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient
 import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
 import org.springframework.stereotype.Service
+import zinc.example.test.common.authority.JwtTokenProvider
+import zinc.example.test.common.authority.TokenInfo
 import zinc.example.test.common.config.NaverOAuth2ClientProperties
 import zinc.example.test.common.exception.InvalidInputException
 import zinc.example.test.common.status.Gender
+import zinc.example.test.common.status.ROLE
+import zinc.example.test.member.dto.LoginDto
 import zinc.example.test.member.dto.MemberDtoRequest
 import zinc.example.test.member.entity.Member
+import zinc.example.test.member.entity.MemberRole
 import zinc.example.test.member.repository.MemberRepository
+import zinc.example.test.member.repository.MemberRoleRepository
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
@@ -27,6 +36,11 @@ import java.util.concurrent.ConcurrentHashMap
 @Service
 class MemberService (
         private val memberRepository: MemberRepository,
+        private val memberRoleRepository: MemberRoleRepository,
+
+        private val authenticationManagerBuilder: AuthenticationManagerBuilder,
+        private val jwtTokenProvider: JwtTokenProvider,
+
         private val naverOAuth2ClientProperties: NaverOAuth2ClientProperties
 ){
 
@@ -45,25 +59,32 @@ class MemberService (
             throw InvalidInputException("eamil", "이미 등록된 Email 입니다.")
         }
 
-        member = Member(
-                null,
-                memberDtoRequest.loginId,
-                memberDtoRequest.password,
-                memberDtoRequest.name,
-                memberDtoRequest.birthDate,
-                memberDtoRequest.gender,
-                memberDtoRequest.email
-        )
-
+        // 2. 사용자 정보 저장
+        member = memberDtoRequest.toEntity()
         memberRepository.save(member)
 
-        return "회원가입 성공!"
+        // 3. 권한 저장
+        val memberRole = MemberRole(null, ROLE.MEMBER, member)
+        memberRoleRepository.save(memberRole)
+
+        return "회원가입이 완료되었습니다!"
     }
+
+    /**
+     * 로그인 -> 토큰 발행
+     */
+    fun login(loginDto: LoginDto): TokenInfo{
+        val authenticationToken = UsernamePasswordAuthenticationToken(loginDto.email, loginDto.password)
+        val authentication = authenticationManagerBuilder.`object`.authenticate(authenticationToken)
+
+        return jwtTokenProvider.createToken(authentication)
+    }
+
 
     /**
      * 네이버 로그인
      */
-    fun naverLogin(authentication: OAuth2AuthenticationToken, authorizedClient: OAuth2AuthorizedClient): String{
+    fun naverLogin(authentication: OAuth2AuthenticationToken, authorizedClient: OAuth2AuthorizedClient): Member{
 
         val userAttributes = authentication.principal.attributes
         val response = userAttributes["response"] as Map<String, Any>
@@ -74,7 +95,7 @@ class MemberService (
         val name = response["name"] as String
         val birthday = response["birthday"] as String
         val birthyear = response["birthyear"] as String
-
+        val password : String = "naverlogin_pw"
 
         var member: Member? =
                 memberRepository.findByEmail(email!!)
@@ -94,7 +115,7 @@ class MemberService (
             member = Member(
                     null,
                     id!!,
-                    "naver-11",
+                    password,
                     name!!,
                     birth,
                     gen!!,
@@ -102,11 +123,15 @@ class MemberService (
             )
 
             memberRepository.save(member)
+
+            val memberRole = MemberRole(null, ROLE.MEMBER, member)
+            memberRoleRepository.save(memberRole)
             println("회원가입 완료")
         }
 
-        tokenMap.put(email, authorizedClient.accessToken.tokenValue) // token 정보 map 에 저장
-        return email
+        tokenMap.put(email, authorizedClient.accessToken.tokenValue) // navar access token 정보 map 에 저장 (로그아웃 때문)
+
+        return member
     }
 
     /**
