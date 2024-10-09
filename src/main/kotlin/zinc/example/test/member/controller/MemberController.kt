@@ -1,5 +1,6 @@
 package zinc.example.test.member.controller
 
+import com.fasterxml.jackson.databind.ser.Serializers.Base
 import io.ktor.http.*
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -12,8 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import zinc.example.test.common.authority.TokenInfo
 import zinc.example.test.common.dto.BaseResponse
+import zinc.example.test.member.dto.LoginDto
 import zinc.example.test.member.dto.MemberDtoRequest
+import zinc.example.test.member.entity.Member
 import zinc.example.test.member.service.MemberService
 import java.util.concurrent.ConcurrentHashMap
 
@@ -33,15 +37,24 @@ class MemberController (
     }
 
     /**
+     * 로그인
+     */
+    @PostMapping("/login")
+    fun login(@RequestBody @Valid loginDto: LoginDto): BaseResponse<TokenInfo>{
+        val tokenInfo = memberService.login(loginDto)
+        return BaseResponse(data = tokenInfo)
+    }
+
+    /**
      * 네이버 로그인 Oauth 연동
      */
     @GetMapping("/login/naver")
     fun naverLogin(authentication: OAuth2AuthenticationToken, @RegisteredOAuth2AuthorizedClient("naver") authorizedClient: OAuth2AuthorizedClient): ResponseEntity<String> {
-        val userEmail: String? = memberService.naverLogin(authentication, authorizedClient)
+        val member : Member = memberService.naverLogin(authentication, authorizedClient)
 
         return ResponseEntity
                 .status(HttpStatus.FOUND)
-                .header(HttpHeaders.Location, "http://localhost:3000/Home?message=$userEmail")
+                .header(HttpHeaders.Location, "http://localhost:3000/Home?message=${member.email}")
                 .build()
     }
 
@@ -49,14 +62,6 @@ class MemberController (
     fun naverLogout(@RequestBody memberDtoRequest: MemberDtoRequest): ResponseEntity<String>{
         memberService.naverLogout(memberDtoRequest)
         return ResponseEntity.status(HttpStatus.OK).build()
-    }
-
-    /**
-     * 로그인
-     */
-    @PostMapping("/login")
-     fun login(@RequestBody memberDtoRequest: MemberDtoRequest): ResponseEntity<String>{
-        return ResponseEntity.ok("로그인 성공")
     }
 
     @GetMapping("/login")

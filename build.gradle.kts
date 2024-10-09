@@ -39,6 +39,11 @@ dependencies {
 	implementation("io.ktor:ktor-client-content-negotiation:2.0.3")
 	implementation("io.ktor:ktor-serialization-kotlinx-json:2.0.3")
 
+	// jwt
+	implementation("io.jsonwebtoken:jjwt-api:0.12.6")
+	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
+	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
+
 	runtimeOnly("com.h2database:h2")
 
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
