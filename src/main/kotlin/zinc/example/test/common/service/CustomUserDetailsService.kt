@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import zinc.example.test.common.dto.CustomUser
 import zinc.example.test.member.entity.Member
 import zinc.example.test.member.repository.MemberRepository
 
@@ -21,7 +22,8 @@ class CustomUserDetailsService(
                 ?: throw UsernameNotFoundException("해당하는 유저를 찾을 수 없습니다.")
 
     private fun createUserDetails(member: Member): UserDetails =
-            User(
+            CustomUser(
+                    member.id!!,
                     member.email,
                     passwordEncoder.encode(member.password),
                     member.memberRole!!.map { SimpleGrantedAuthority("ROLE_${it.role}") }

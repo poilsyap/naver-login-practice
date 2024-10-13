@@ -16,6 +16,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.User
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Component
+import zinc.example.test.common.dto.CustomUser
 import java.lang.Exception
 import java.lang.IllegalArgumentException
 import java.lang.RuntimeException
@@ -50,6 +51,7 @@ class JwtTokenProvider {
 //                .setSubject(authentication.name) // 사용자 이름 설정
                 .subject(authentication.name) // 사용자 이름 설정
                 .claim("auth", authorities) // 권한 설정
+                .claim("userId", (authentication.principal as CustomUser).userId)
 //                .setIssuedAt(Date.from(now.toInstant())) // 발행 시간
                 .issuedAt(now) // 발행 시간
 //                .setExpiration(Date.from(accessExpiration.toInstant())) // 만료 시간
@@ -58,6 +60,7 @@ class JwtTokenProvider {
                 .signWith(key) // 서명 알고리즘 및 키 설정
                 .compact()
 
+        println("TOKEN 생성 [ Bearer " + accessToken + " ]")
         return TokenInfo("Bearer", accessToken)
     }
 
@@ -68,13 +71,15 @@ class JwtTokenProvider {
         val claims: Claims = getClaims(token)
 
         val auth = claims["auth"] ?:throw RuntimeException("잘못된 토큰입니다.")
+        val userId = claims["userId"] ?:throw RuntimeException("잘못된 토큰입니다.")
 
         // 권한 정보 추출
         val authrities: Collection<GrantedAuthority> = (auth as String)
                 .split(",")
                 .map { SimpleGrantedAuthority(it) }
 
-        val principal: UserDetails = User(claims.subject, "", authrities)
+        val principal: UserDetails =
+                CustomUser(userId.toString().toLong(), claims.subject, "", authrities)
 
         return UsernamePasswordAuthenticationToken(principal, "", authrities)
     }

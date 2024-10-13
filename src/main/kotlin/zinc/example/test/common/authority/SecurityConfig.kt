@@ -38,8 +38,9 @@ class SecurityConfig (
                 }
 //                .sessionManagement{ it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) } // jwt토큰을 사용하기 때문에 세션정책 사용 x
                 .authorizeHttpRequests{
-                    it.requestMatchers("/api/member/signup").anonymous() // 회원 가입은 익명의 사용자만 접근할 수 있도록
-                        .requestMatchers("/","/h2-console/**", "/api/member/**").permitAll()
+                    it.requestMatchers("/api/member/signup", "/api/member/login").anonymous() // 회원 가입은 익명의 사용자만 접근할 수 있도록
+                        .requestMatchers("/api/member/info/**", "/api/member/logout/naver").hasRole("MEMBER")
+                        .requestMatchers("/","/h2-console/**").permitAll()
                         .requestMatchers(PathRequest.toH2Console()).permitAll() // h2-console 허용
                         .anyRequest().authenticated()
                 }

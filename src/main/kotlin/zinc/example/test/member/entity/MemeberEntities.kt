@@ -3,8 +3,10 @@ package zinc.example.test.member.entity
 import jakarta.persistence.*
 import zinc.example.test.common.status.Gender
 import zinc.example.test.common.status.ROLE
+import zinc.example.test.member.dto.MemberDtoResponse
 import java.time.LocalDate
 import java.time.MonthDay
+import java.time.format.DateTimeFormatter
 
 @Entity
 @Table(
@@ -37,6 +39,19 @@ class Member(
 ){
         @OneToMany(fetch = FetchType.LAZY, mappedBy = "member")
         val memberRole: List<MemberRole>? = null
+
+        private fun LocalDate.formatDate(): String =
+                this.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+
+        fun toDto(): MemberDtoResponse =
+                MemberDtoResponse(
+                        id!!,
+                        loginId,
+                        name,
+                        birthDate.formatDate(),
+                        gender.desc,
+                        email
+                )
 }
 
 @Entity
