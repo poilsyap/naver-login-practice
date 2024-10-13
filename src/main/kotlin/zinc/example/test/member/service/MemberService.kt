@@ -10,6 +10,7 @@ import jakarta.transaction.Transactional
 import kotlinx.coroutines.runBlocking
 import org.apache.juli.logging.Log
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient
@@ -24,6 +25,7 @@ import zinc.example.test.common.status.Gender
 import zinc.example.test.common.status.ROLE
 import zinc.example.test.member.dto.LoginDto
 import zinc.example.test.member.dto.MemberDtoRequest
+import zinc.example.test.member.dto.MemberDtoResponse
 import zinc.example.test.member.entity.Member
 import zinc.example.test.member.entity.MemberRole
 import zinc.example.test.member.repository.MemberRepository
@@ -80,6 +82,22 @@ class MemberService (
         return jwtTokenProvider.createToken(authentication)
     }
 
+    /**
+     * 내 정보 보기
+     */
+    fun searchMyInfo(id: Long): MemberDtoResponse{
+        var member = memberRepository.findByIdOrNull(id)?: throw InvalidInputException("id", "회원정보 ${id} 가 존재하지 않습니다.")
+        return member.toDto()
+    }
+
+    /**
+     * 내 정보 수정
+     */
+    fun saveMyInfo(memberDtoRequest: MemberDtoRequest): String{
+        var member = memberDtoRequest.toEntity()
+        memberRepository.save(member)
+        return "수정 완료되었습니다."
+    }
 
     /**
      * 네이버 로그인
